@@ -1,0 +1,99 @@
+Lecture 03　資料觀察:連續型
+--------------------------------------------------------------------------------
+3.1　資料篩選、排序
+
+#條件篩選，查看ID及品名
+> data1[data1$人氣>50000,c(1,6,11)]
+#位置篩選，結果與上述同
+> data1[which(data1$人氣>50000),c(1,6,11)]
+#切割篩選，結果與上述同
+> subset(data1,data1$人氣>50000,select=c(1,6,11))
+
+> subdata=data1[data1$人氣>50000,c(1,6,11,12)]
+> subdata=data1[which(data1$人氣>50000),c(1,6,11,12)]
+> subdata=subset(data1,data1$人氣>50000,select=c(1,6,11,12))
+#order:多重排序且由高至低
+> subdata[order(-subdata$推薦指數,-subdata$人氣),]
+
+--------------------------------------------------------------------------------
+#sqldf-packages
+> install.packages("sqldf")
+> library("sqldf")
+#order by:單句完成欄位、條件篩選及排列工作
+> sqldf('select 1,6,11,12 from data1 where 人氣>50000 order by 推薦指數 desc, 人氣 desc')
+
+#dplyr處理包
+> install.packages("dplyr")
+> library("dplyr")
+#arrange:多重運算搭配管道(pipe)
+> filter(data1,人氣>50000) %>%
++ select(1,6,11,12) %>%
++ arrange(desc(推薦指數),desc(人氣))
+# A tibble: 191 x 4
+      ID 產品名稱                                    推薦指數   人氣
+   <dbl> <chr>                                          <dbl>  <dbl>
+ 1  1310 情挑誘光水唇膏                                   6.4 843916
+ 2   368 花漾腮紅 Cheek Pop                               6.4 393448
+ 3  1098 奢華緞面漆光唇釉                                 6.4 253415
+ 4   369 炫色腮紅 Blush                                   6.4 194151
+ 5   979 COCO精萃釉色唇筆                                 6.4 183228
+ 6  1597 經典璀璨唇膏                                     6.3 665597
+ 7  3933 裸色深邃眼影 MULTI- EFFECT BROWN EYE SHADOW      6.3 325938
+ 8  2279 奢華訂製柔霧唇露                                 6.3 271139
+ 9   875 奢華絲絨訂製唇萃 LIP MAESTRO                     6.3 241120
+10   370 蜜光修容 CHEEKY CHIC BLUSH                       6.3 161492
+# ... with 181 more rows 
+
+--------------------------------------------------------------------------------
+3.2　次數統計表
+
+#一維次數統計
+> table(data1$推薦指數)
+ 1.9   2 2.1 2.2 2.3 2.4 2.5 2.6 2.7 2.8 2.9   3 3.1 3.2 3.3 3.4 3.5 3.6 3.7 3.8 3.9   4 4.1 4.2 4.3 4.4 4.5 4.6 4.7 4.8 4.9   5 5.1 5.2 5.3 5.4 5.5 5.6 5.7 5.8 5.9   6 6.1 6.2 6.3 6.4 
+   8  26   7  61  18  73  47  69 111  76 142 150 134 155 150 142 155 186 147 119 135 131 143 146 132 126 149 140 140 144 131 137 124 126 141 142 134 102 126 101  84  68  36  20  11   5 
+> summary(data1$推薦指數)
+  Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 1.900   3.300   4.200   4.191   5.100   6.400
+
+--------------------------------------------------------------------------------
+3.3.1　資料視覺化:離散化(類別型)
+
+> split1=table(cut(data1$推薦指數,seq(1.9,6.4,by=0.9)))
+ (1.9,2.8] (2.8,3.7] (3.7,4.6] (4.6,5.5] (5.5,6.4] 
+       488      1361      1221      1219       553   
+#一維次數分配表(搭配百分比)
+> barplot(split1,col=rainbow(5))
+> barplot(prop.table(split1),col=rainbow(5),horiz=T)
+> pie(split1,col=rainbow(5))
+> pct=round(prop.table(split1)*100,2)
+> pie(split1,labels=paste(names(split1),pct,"%"),col=rainbow(5))
+
+#二維交叉分析表(搭配圖例)
+> split2=cut(data1$推薦指數,seq(1.9,6.4,by=0.9))
+#以產品分類為軸，搭配split2 離散化之推薦指數分類
+> category=names(table(data1$產品分類))
+> barplot(table(split2,data1$產品分類),legend=category,col=rainbow(5),beside=T)
+
+--------------------------------------------------------------------------------
+3.3.2　資料視覺化:未離散化(連續型)
+
+#直方圖
+> hist(data1$推薦指數,breaks=15,col=rainbow(15))
+#連續資料~類別分組
+> par(mfrow=c(5,1))
+> hist(data1[data1$產品分類=="眉睫",]$推薦指數,breaks=15,col=rainbow(15))
+> hist(data1[data1$產品分類=="面頰",]$推薦指數,breaks=15,col=rainbow(15))
+> hist(data1[data1$產品分類=="唇彩",]$推薦指數,breaks=15,col=rainbow(15))
+> hist(data1[data1$產品分類=="眼影",]$推薦指數,breaks=15,col=rainbow(15))
+> hist(data1[data1$產品分類=="眼線",]$推薦指數,breaks=15,col=rainbow(15))
+
+#盒鬚圖
+> boxplot(data1$推薦指數,horizontal=T)
+#連續資料~類別分組
+> boxplot(data1$推薦指數~data1$產品分類,horizontal=T,col=rainbow(5))
+
+#散佈圖
+> plot(data1$人氣,data1$價格)
+> plot(data1[,c("人氣","價格")])
+#多維度分析，但僅限連續型變數
+> plot(data1[,c("人氣","價格","推薦指數")])
