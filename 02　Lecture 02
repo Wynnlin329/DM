@@ -1,0 +1,99 @@
+Lecture 02　資料觀察:類別型
+--------------------------------------------------------------------------------
+2.1　資料篩選
+
+#條件篩選，查看ID及品名
+> data1[data1$產品分類=="眼線",c(1,6)]
+#位置篩選，結果與上述同
+> data1[which(data$產品分類=="眼線"),c(1,6)]
+#切割篩選，結果與上述同
+> subset(data1,data1$產品分類=="眼線",select=c(1,6))
+
+--------------------------------------------------------------------------------
+#sqldf-packages
+> install.packages("sqldf")
+> library("sqldf")
+> sqldf('select 1,6 from data1 where 產品分類=="眼線"')
+
+#dplyr處理包
+> install.packages("dplyr")
+> library("dplyr")
+#多重運算:管道(pipe)
+> filter(data1,產品分類=="眼線") %>%
++ select(1,6) 
+# A tibble: 651 x 2
+      ID 產品名稱                                 
+   <dbl> <chr>                                    
+ 1  4200 ELLEFAR眼線防暈染固定液                  
+ 2  4201 巧繪眉餅&眼線餅 Eyebrow & Eyeliner       
+ 3  4202 放電眼線盒                               
+ 4  4203 煙燻柔焦眼線粉                           
+ 5  4204 提洛可眼線粉 TERRACOTTA KOHL LOOSE POWDER
+ 6  4205 PUCCI限量版煙燻棒 Khol Kajal             
+ 7  4206 金屬光燦眼影蜜                           
+ 8  4207 雙采眼線盒 W Powder Eyeline              
+ 9  4208 極緻東方眼影眼線盒                       
+10  4209 晶采絕色眼線霜                           
+# ... with 641 more rows
+
+--------------------------------------------------------------------------------
+2.2　次數統計表
+
+#一維次數統計
+> table(data1$部位)
+ 面頰 唇部 眼妝 
+  860 1449 2541
+> table(data1$產品分類)
+ 眉睫 面頰 唇彩 眼影 眼線 
+  964  860 1449  926  651
+
+--------------------------------------------------------------------------------
+#二維次數統計(交叉分析表＝列聯表)
+> table(data1$產品分類,data1$通路名稱)      
+      其他 專賣店 專櫃 開架 網站 網路 醫療通路
+ 眉睫   19     63  359  450    0   71        2
+ 面頰   10     76  484  201    0   87        2
+ 唇彩   12    152  754  382   63   82        4
+ 眼影   14     91  467  262    0   92        0
+ 眼線    7     32  253  285    0   73        1
+
+#ftable功能亦同，唯須篩選類別變數
+> subdata=data1[,c(3,5)]
+> ftable(subdata,1,2)
+          通路名稱 其他 專賣店 專櫃 開架 網站 網路 醫療通路 
+ 產品分類                                                  
+ 眉睫                19     63  359  450    0   71        2
+ 面頰                10     76  484  201    0   87        2
+ 唇彩                12    152  754  382   63   82        4
+ 眼影                14     91  467  262    0   92        0
+ 眼線                 7     32  253  285    0   73        1
+
+--------------------------------------------------------------------------------
+2.3　資料視覺化
+
+#一維長條圖
+> barplot(table(data1$產品分類),col=rainbow(5))
+#搭配prop.table計算百分比，設定橫式輸出
+> barplot(prop.table(table(data1$產品分類)),main="產品分類分配表",xlab="產品分類",col=rainbow(5),horiz=T)
+
+#二維長條圖
+#以通路名稱為軸，堆疊產品分類
+> barplot(table(data1$產品分類,data1$通路名稱),col=rainbow(20))
+#以產品分類為軸，並排通路名稱(加上圖例)
+> channel=names(table(data1$通路名稱))
+> barplot(table(data1$通路名稱,data1$產品分類),legend=channel,col=rainbow(10),beside=T)
+> barplot(prop.table(table(data1$通路名稱,data1$產品分類)),legend=channel,col=rainbow(10),beside=T)
+
+--------------------------------------------------------------------------------
+#圓餅圖
+> pie(table(data1$產品分類),col=rainbow(5))
+#在標籤加入比例:搭配prop.table
+> product=names(table(data1$產品分類))
+> pct=round(prop.table(table(data1$產品分類))*100,2)
+> pie(table(data1$產品分類),labels=paste(product,pct,"%"),col=rainbow(5))
+
+#文字雲
+> install.packages("wordcloud")
+> library("wordcloud")
+#給定參數:字詞、頻率
+> wordcloud(names(table(data1$產品分類)),table(data1$產品分類),color=rainbow(5))
